@@ -4,8 +4,8 @@ from flask_script import Manager
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import (
-    JWTManager, jwt_required, create_access_token,
-    get_jwt_identity
+    JWTManager, jwt_required, create_access_token, create_refresh_token,
+    get_jwt_identity, jwt_refresh_token_required
 )
 from models import db, Pais, Categoria, Role, User
 from config import DevelopmentConfig
@@ -49,6 +49,13 @@ def login():
         else:
             return jsonify({"msg":"Username and Password are incorrect"}), 401
 
+@app.route('refresh', methods=['POST'])
+@jwt_refresh_token_required
+def refresh():
+    current_user = get_jwt_identity()
+    new_token = create_access_token(identity=current_user, fresh=False)
+    ret = {'access_token': new_token}
+    return jsonify(ret), 200
 
     
 
@@ -59,6 +66,7 @@ def register():
 
 @app.route('/paises', methods=['GET', 'POST'])
 @app.route('/paises/<int:id>', methods=['GET', 'PUT', 'DELETE'])
+jwt_required
 def paises(id=None):
     if request.method == 'GET':
         if id is not None:
